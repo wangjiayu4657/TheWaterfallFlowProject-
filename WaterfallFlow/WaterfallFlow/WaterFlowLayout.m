@@ -23,11 +23,52 @@ static const UIEdgeInsets DefaultEdgeInsets = {10,10,10,10};
 /**存放所有列的当前高度*/
 @property (strong , nonatomic) NSMutableArray *cellHeights;
 
+- (NSInteger) columnCount ;
+- (NSInteger) columnMargin ;
+- (NSInteger) rowMargin ;
+- (UIEdgeInsets) edgeInsets;
+
 @end
 
 
 @implementation WaterFlowLayout
 
+
+- (NSInteger) columnCount {
+    if ([self.delegate respondsToSelector:@selector(columnCountInWaterFlowLayout:)]) {
+        return [self.delegate columnCountInWaterFlowLayout:self];
+    }
+    else {
+        return DefaultColumnCount;
+    }
+}
+
+- (NSInteger) columnMargin {
+    if ([self.delegate respondsToSelector:@selector(columnMarginInWaterFlowLayout:)]) {
+        return [self.delegate columnMarginInWaterFlowLayout:self];
+    }
+    else {
+        return DefaultColumnMargin;
+    }
+}
+
+- (NSInteger) rowMargin {
+    if ([self.delegate respondsToSelector:@selector(rowMarginInWaterFlowLayout:)]) {
+        return [self.delegate rowMarginInWaterFlowLayout:self];
+    }
+    else {
+        return DefaultRowMargin;
+    }
+}
+
+- (UIEdgeInsets) edgeInsets {
+    if ([self.delegate respondsToSelector:@selector(edgeInsetsInWaterFlowLayout:)]) {
+        return [self.delegate edgeInsetsInWaterFlowLayout:self];
+    }
+    else {
+        return DefaultEdgeInsets;
+    }
+}
 
 -(NSMutableArray *)attrsArray {
     if (!_attrsArray) {
@@ -50,8 +91,8 @@ static const UIEdgeInsets DefaultEdgeInsets = {10,10,10,10};
     [super prepareLayout];
     
     [self.cellHeights removeAllObjects];
-    for (NSInteger i = 0; i < DefaultColumnCount; i++) {
-        [self.cellHeights addObject:@(DefaultEdgeInsets.top)];
+    for (NSInteger i = 0; i < self.columnCount; i++) {
+        [self.cellHeights addObject:@(self.edgeInsets.top)];
     }
     
     /**清除原来的数据*/
@@ -83,13 +124,13 @@ static const UIEdgeInsets DefaultEdgeInsets = {10,10,10,10};
     
     CGFloat collectionW = self.collectionView.frame.size.width;
    
-    CGFloat w = (collectionW - DefaultEdgeInsets.left - DefaultEdgeInsets.right - (DefaultColumnCount - 1) * DefaultColumnMargin)/DefaultColumnCount;
-    CGFloat h = 50 + arc4random_uniform(100);
+    CGFloat w = (collectionW - self.edgeInsets.left - self.edgeInsets.right - (self.columnCount - 1) * self.columnMargin)/self.columnCount;
+    CGFloat h = [self.delegate waterFlowLayout:self heightForItemAtIndex:indexPath.item itemWidth:w];
     
     /**找出最短那一列*/
     NSInteger destColumn = 0;
     CGFloat minColumnHeight = [self.cellHeights[0] doubleValue];
-    for (NSInteger i = 1; i < DefaultColumnCount; i++) {
+    for (NSInteger i = 1; i < self.columnCount; i++) {
         CGFloat columnHeight = [self.cellHeights[i] doubleValue];
         if (minColumnHeight > columnHeight) {
             minColumnHeight = columnHeight;
@@ -97,10 +138,10 @@ static const UIEdgeInsets DefaultEdgeInsets = {10,10,10,10};
         }
     }
     
-    CGFloat x = DefaultEdgeInsets.left + destColumn *(w + DefaultColumnMargin);
+    CGFloat x = self.edgeInsets.left + destColumn *(w + self.columnMargin);
     CGFloat y = minColumnHeight;
-    if (y != DefaultEdgeInsets.top) {
-        y += DefaultRowMargin;
+    if (y != self.edgeInsets.top) {
+        y += self.rowMargin;
     }
     
     attrs.frame = CGRectMake(x,y,w,h);
@@ -116,10 +157,10 @@ static const UIEdgeInsets DefaultEdgeInsets = {10,10,10,10};
  */
 -(CGSize)collectionViewContentSize {
     
-    //找出最短那一列
+    /**找出最短那一列*/
     NSInteger destColumn = 0;
     CGFloat maxColumnHeight = [self.cellHeights[0] doubleValue];
-    for (NSInteger i = 1; i < DefaultColumnCount; i++) {
+    for (NSInteger i = 1; i < self.columnCount; i++) {
         CGFloat columnHeight = [self.cellHeights[i] doubleValue];
         if (maxColumnHeight < columnHeight) {
             maxColumnHeight = columnHeight;
@@ -127,7 +168,7 @@ static const UIEdgeInsets DefaultEdgeInsets = {10,10,10,10};
         }
     }
 
-    return CGSizeMake(0, maxColumnHeight + DefaultEdgeInsets.bottom);
+    return CGSizeMake(0, maxColumnHeight + self.edgeInsets.bottom);
 }
 
 @end
